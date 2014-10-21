@@ -57,7 +57,7 @@ $plugin['flags'] = '3';
 $plugin['textpack'] = <<<EOT
 #@smd_at_work
 smd_at_work => Maintenance mode
-smd_at_work_admin_message => Website is in <a href="?event=prefs">Maintenance Mode</a>
+smd_at_work_admin_message => Website is in <a href="{url}">Maintenance Mode</a>
 smd_at_work_enabled => Maintenance mode enabled
 smd_at_work_message => Maintenance message
 EOT;
