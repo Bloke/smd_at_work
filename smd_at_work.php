@@ -119,9 +119,10 @@ function smd_at_work_banner($evt, $stp)
 	global $event, $step;
 
 	// Force DB lookup of pref to avoid stale message on prefs screen.
-	$force = ($event === 'prefs' && $step === 'prefs_save') ? true : false;
+	$force = ($event === 'prefs' && ($step === 'prefs_save' || $step === 'advanced_prefs_save')) ? true : false;
+	$link = smd_at_work_prefs_link();
 	if (get_pref('smd_at_work_enabled', null, $force) == '1') {
-		echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message') . '</div>';
+		echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</div>';
 	}
 }
 
@@ -153,7 +154,27 @@ function smd_at_work_install()
  */
 function smd_at_work_options()
 {
-	header('Location: ?event=prefs');
+	$link = smd_at_work_prefs_link();
+
+	header('Location: ' . $link);
+}
+
+/**
+ * Fetch the admin-side prefs panel link.
+ *
+ * It's version dependent, as 4.6.0 doesn't have the notion of
+ * Advanced Prefs.
+ */
+function smd_at_work_prefs_link()
+{
+	global $dbversion;
+	if (version_compare($dbversion, '4.6-dev') < 0) {
+		$link = '?event=prefs&step=advanced_prefs';
+	} else {
+		$link = '?event=prefs';
+	}
+
+	return $link;
 }
 
 /**
