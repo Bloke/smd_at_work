@@ -160,7 +160,7 @@ function smd_at_work_install()
 		set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_ADVANCED, 'text_input', 20);
 	}
 
-	if ($textpack !== null) {
+	if (!isset($textarray['smd_at_work']) && $textpack !== null) {
 		install_textpack($textpack);
 
 		// Refresh the language strings so they are immediately available.
