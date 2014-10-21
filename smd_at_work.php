@@ -114,8 +114,11 @@ function smd_at_work_welcome($evt, $stp)
  */
 function smd_at_work_banner($evt, $stp)
 {
-	// Force DB lookup of pref to avoid stale message.
-	if (get_pref('smd_at_work_enabled', null, true) == '1') {
+	global $event, $step;
+
+	// Force DB lookup of pref to avoid stale message on prefs screen.
+	$force = ($event === 'prefs' && $step === 'prefs_save') ? true : false;
+	if (get_pref('smd_at_work_enabled', null, $force) == '1') {
 		echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message') . '</div>';
 	}
 }
