@@ -74,9 +74,11 @@ if (!defined('txpinterface'))
  */
 if (txpinterface === 'admin') {
 	add_privs('prefs.smd_at_work', '1');
+	add_privs('plugin_prefs.smd_at_work', '1');
 	register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
 	register_callback('smd_at_work_banner', 'admin_side', 'pagetop_end');
 	register_callback('smd_at_work_install', 'prefs', null, 1);
+	register_callback('smd_at_work_options', 'plugin_prefs.smd_at_work', null, 1);
 } elseif (txpinterface === 'public') {
 	register_callback('smd_at_work_init', 'pretext');
 }
@@ -144,6 +146,14 @@ function smd_at_work_install()
 	if (get_pref('smd_at_work_message', null) === null) {
 		set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_ADVANCED, 'text_input', 20);
 	}
+}
+
+/**
+ * Jump to the prefs panel.
+ */
+function smd_at_work_options()
+{
+	header('Location: ?event=prefs');
 }
 
 /**
