@@ -101,6 +101,7 @@ function smd_at_work_welcome($evt, $stp)
 			} else {
 				safe_delete('txp_prefs', "event='smd_at_work'");
 			}
+			safe_delete('txp_lang', "name LIKE 'smd\_at\_work%'");
 			break;
 	}
 }
