@@ -67,7 +67,7 @@ if (!defined('txpinterface'))
 
 # --- BEGIN PLUGIN CODE ---
 /**
- * smd_at_work: a Textpattern CMS plugin for informing visitors of site maintenance
+ * smd_at_work: a Textpattern CMS plugin for informing visitors of site maintenance.
  *
  * @author Stef Dawson
  * @see http://stefdawson.com/
@@ -76,12 +76,13 @@ if (txpinterface === 'admin') {
 	add_privs('prefs.smd_at_work', '1');
 	register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
 	register_callback('smd_at_work_banner', 'admin_side', 'pagetop_end');
+	register_callback('smd_at_work_install', 'prefs', null, 1);
 } elseif (txpinterface === 'public') {
 	register_callback('smd_at_work_init', 'pretext');
 }
 
 /**
- * Handler for plugin lifecycle events
+ * Handler for plugin lifecycle events.
  *
  * @param string $evt Textpattern action event
  * @param string $stp Textpattern action step
@@ -91,9 +92,7 @@ function smd_at_work_welcome($evt, $stp)
 	switch ($stp) {
 		case 'installed':
 		case 'enabled':
-			// TODO: change to PREF_PLUGIN from 4.6
-			set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_ADVANCED, 'yesnoradio', 10);
-			set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_ADVANCED, 'text_input', 20);
+			smd_at_work_install();
 			break;
 		case 'deleted':
 			if (function_exists('remove_pref')) {
@@ -124,6 +123,29 @@ function smd_at_work_banner($evt, $stp)
 }
 
 /**
+ * Install the prefs if necessary.
+ *
+ * This is a separate function so it can be used as a direct callback.
+ * When operating under a plugin cache environment, the install lifecycle
+ * event is never fired, so this is a fallback.
+ *
+ * The lifecycle callback remains for deletion purposes under a regular installation,
+ * since the plugin cannot detect this in a cache environment.
+ *
+ * @see smd_at_work_welcome()
+ * @todo change PREF_ADVANCED to PREF_PLUGIN from 4.6
+ */
+function smd_at_work_install()
+{
+	if (get_pref('smd_at_work_enabled', null) === null) {
+		set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_ADVANCED, 'yesnoradio', 10);
+	}
+	if (get_pref('smd_at_work_message', null) === null) {
+		set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_ADVANCED, 'text_input', 20);
+	}
+}
+
+/**
  * Public-side initialisation.
  *
  * Only sets up the callback if:
@@ -144,7 +166,7 @@ function smd_at_work_init()
 }
 
 /**
- * Throw an HTTP 503 error
+ * Throw an HTTP 503 error.
  */
 function smd_at_work()
 {
