@@ -223,6 +223,42 @@ function smd_at_work()
 {
 	txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
 }
+
+/**
+ * Public conditional tag to determine if maintenance mode is active.
+ *
+ * Not so much use on the actual public site, but handy for admin-side
+ * dashboards.
+ */
+function smd_if_at_work($atts = array(), $thing = null)
+{
+	return parse(EvalElse($thing, (get_pref('smd_at_work_enabled', null, true) == '1')));
+}
+
+/**
+ * Public tag to set the maintenance status.
+ *
+ * Only logged-in users may set this. It is up to application
+ * logic if this is restricted any further.
+ */
+function smd_at_work_status($atts = array(), $thing = null)
+{
+	extract(lAtts(array(
+		'status' => null,
+	), $atts));
+
+	// Null status toggles the state.
+	if ($status === null) {
+		$status = !get_pref('smd_at_work_enabled', null, true);
+	}
+
+	if (is_logged_in()) {
+		set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
+	}
+}
+
+
+
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
@@ -240,7 +276,46 @@ With the switch on, anyone not logged into the admin side will see a 503 error s
 
 When maintenance mode is on, a message is displayed in the lower-right hand corner of all admin-side panels to remind you of the fact, with a link to the preferences panel so you can easily turn it off.
 
-This plugin is a complete rip of the excellent rvm_maintenance plugin, but with the ability to control things via a preference instead of using the plugin's enabled/disabled state. This makes it easier to manage your site's status in a disk-based plugin cache environment where plugins are "always on". Thanks to Ruud van Melick for the original plugin.
+h2. Public tags
+
+There are two public tags available. One to determine the current state of maintenance mode, and the other to set it on/off. These are of limited use in live templates, but can be very helpful on admin-side dashboards to allow shortcuts for setting the maintenance state of the site.
+
+h3. @<txp:smd_if_at_work>@
+
+Conditional tag, with no attributes, that executes the contained content if the site is in maintenance mode. Supports @<txp:else />@.
+
+h3. @<txp:smd_at_work_status>@
+
+Set the site maintenance state. Attribute:
+
+h4. @status@
+
+Values:
+
+* omitted: toggle status
+* 0: set maintenance mode off
+* 1: set maintenance mode on
+
+Note that the plugin only checks to see if the tag is used by any logged-in user. If you wish to exact finer-grained control, you must do so in your Page template.
+
+h2. Example 1: toggle the site state on click of a link
+
+bc.. <txp:adi_gps name="maintenance" quiet="1" />
+
+<txp:if_variable name="maintenance" value="">
+<txp:else />
+   <txp:smd_at_work_status />
+</txp:if_variable>
+
+<txp:smd_if_at_work>
+   Maintenance Mode is on. <a href="?event=dashboard&maintenance=1">Make site live</a>.
+<txp:else />
+   Website is live. <a href="?event=dashboard&maintenance=1">Put it in Maintenance Mode</a>.
+</txp:smd_if_at_work>
+
+h2. Author/credits
+
+Cobbled together by "Stef Dawson":http://stefdawson.com/sw, this plugin is a complete rip of the excellent rvm_maintenance plugin, but with the ability to control things via a preference instead of using the plugin's enabled/disabled state. This makes it easier to manage your site's status in a disk-based plugin cache environment where plugins are "always on". Thanks to Ruud van Melick for the original plugin.
 # --- END PLUGIN HELP ---
 -->
 <?php
