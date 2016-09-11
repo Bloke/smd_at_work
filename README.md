@@ -2,7 +2,7 @@
 
 Tell visitors your Textpattern website is undergoing maintenance with the flick of a switch.
 
-- Install and enable the plugin.
+- Install and enable the plugin [Requires Textpattern 4.6.0+].
 - Visit the __Admin > Prefs__ panel.
 - Set __Maintenance mode enabled__ on or off as desired and set the optional message to display.
 

@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.11';
+$plugin['version'] = '0.20';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -73,22 +73,22 @@ if (!defined('txpinterface'))
  * @see http://stefdawson.com/
  */
 if (txpinterface === 'admin') {
-	global $textpack;
+    global $textpack;
 
-	add_privs('prefs.smd_at_work', '1');
-	add_privs('plugin_prefs.smd_at_work', '1');
-	register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
-	register_callback('smd_at_work_banner', 'admin_side', 'pagetop_end');
-	register_callback('smd_at_work_install', 'prefs', null, 1);
-	register_callback('smd_at_work_options', 'plugin_prefs.smd_at_work', null, 1);
+    add_privs('prefs.smd_at_work', '1');
+    add_privs('plugin_prefs.smd_at_work', '1');
+    register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
+    register_callback('smd_at_work_banner', 'admin_side', 'pagetop_end');
+    register_callback('smd_at_work_install', 'prefs', null, 1);
+    register_callback('smd_at_work_options', 'plugin_prefs.smd_at_work', null, 1);
 
-	// If loaded from cache, we can access the Textpack from the global scope
-	// to auto-install it later.
-	if (isset($plugin)) {
-		$textpack = $plugin['textpack'];
-	}
+    // If loaded from cache, we can access the Textpack from the global scope
+    // to auto-install it later.
+    if (isset($plugin)) {
+        $textpack = $plugin['textpack'];
+    }
 } elseif (txpinterface === 'public') {
-	register_callback('smd_at_work_init', 'pretext');
+    register_callback('smd_at_work_init', 'pretext');
 }
 
 /**
@@ -99,21 +99,16 @@ if (txpinterface === 'admin') {
  */
 function smd_at_work_welcome($evt, $stp)
 {
-	switch ($stp) {
-		case 'installed':
-		case 'enabled':
-			smd_at_work_install();
-			break;
-		case 'deleted':
-			if (function_exists('remove_pref')) {
-				// 4.6 API
-				remove_pref(null, 'smd_at_work');
-			} else {
-				safe_delete('txp_prefs', "event='smd_at_work'");
-			}
-			safe_delete('txp_lang', "name LIKE 'smd\_at\_work%'");
-			break;
-	}
+    switch ($stp) {
+        case 'installed':
+        case 'enabled':
+            smd_at_work_install();
+            break;
+        case 'deleted':
+            remove_pref(null, 'smd_at_work');
+            safe_delete('txp_lang', "name LIKE 'smd\_at\_work%'");
+            break;
+    }
 }
 
 /**
@@ -124,14 +119,15 @@ function smd_at_work_welcome($evt, $stp)
  */
 function smd_at_work_banner($evt, $stp)
 {
-	global $event, $step;
+    global $event, $step;
 
-	// Force DB lookup of pref to avoid stale message on prefs screen.
-	$force = ($event === 'prefs' && ($step === 'prefs_save' || $step === 'advanced_prefs_save')) ? true : false;
-	$link = smd_at_work_prefs_link();
-	if (get_pref('smd_at_work_enabled', null, $force) == '1') {
-		echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</div>';
-	}
+    // Force DB lookup of pref to avoid stale message on prefs screen.
+    $force = ($event === 'prefs' && ($step === 'prefs_save')) ? true : false;
+    $link = smd_at_work_prefs_link();
+
+    if (get_pref('smd_at_work_enabled', null, $force) == '1') {
+        echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</div>';
+    }
 }
 
 /**
@@ -146,26 +142,25 @@ function smd_at_work_banner($evt, $stp)
  * since the plugin cannot detect this in a cache environment.
  *
  * @see smd_at_work_welcome()
- * @todo change PREF_ADVANCED to PREF_PLUGIN from 4.6
  */
 function smd_at_work_install()
 {
-	global $textpack, $textarray;
+    global $textpack, $textarray;
 
-	if (get_pref('smd_at_work_enabled', null) === null) {
-		set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_ADVANCED, 'yesnoradio', 10);
-	}
+    if (get_pref('smd_at_work_enabled', null) === null) {
+        set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_PLUGIN, 'yesnoradio', 10);
+    }
 
-	if (get_pref('smd_at_work_message', null) === null) {
-		set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_ADVANCED, 'text_input', 20);
-	}
+    if (get_pref('smd_at_work_message', null) === null) {
+        set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'text_input', 20);
+    }
 
-	if (!isset($textarray['smd_at_work']) && $textpack !== null) {
-		install_textpack($textpack);
+    if (!isset($textarray['smd_at_work']) && $textpack !== null) {
+        install_textpack($textpack);
 
-		// Refresh the language strings so they are immediately available.
-		$textarray = load_lang(LANG);
-	}
+        // Refresh the language strings so they are immediately available.
+        $textarray = load_lang(LANG);
+    }
 }
 
 /**
@@ -173,27 +168,17 @@ function smd_at_work_install()
  */
 function smd_at_work_options()
 {
-	$link = smd_at_work_prefs_link();
+    $link = smd_at_work_prefs_link();
 
-	header('Location: ' . $link);
+    header('Location: ' . $link);
 }
 
 /**
  * Fetch the admin-side prefs panel link.
- *
- * It's version dependent, as 4.6.0 doesn't have the notion of
- * Advanced Prefs.
  */
 function smd_at_work_prefs_link()
 {
-	global $dbversion;
-	if (version_compare($dbversion, '4.6-dev') < 0) {
-		$link = '?event=prefs&step=advanced_prefs';
-	} else {
-		$link = '?event=prefs';
-	}
-
-	return $link;
+    return '?event=prefs#prefs_group_smd_at_work';
 }
 
 /**
@@ -208,12 +193,12 @@ function smd_at_work_prefs_link()
  */
 function smd_at_work_init()
 {
-	if (get_pref('smd_at_work_enabled') == '1') {
-		if (txpinterface === 'public' and !gps('txpcleantest') and !is_logged_in()) {
-			$_GET = $_POST = $_REQUEST = array();
-			register_callback('smd_at_work', 'pretext_end');
-		}
-	}
+    if (get_pref('smd_at_work_enabled') == '1') {
+        if (txpinterface === 'public' and !gps('txpcleantest') and !is_logged_in()) {
+            $_GET = $_POST = $_REQUEST = array();
+            register_callback('smd_at_work', 'pretext_end');
+        }
+    }
 }
 
 /**
@@ -221,7 +206,7 @@ function smd_at_work_init()
  */
 function smd_at_work()
 {
-	txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
+    txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
 }
 
 /**
@@ -232,7 +217,7 @@ function smd_at_work()
  */
 function smd_if_at_work($atts = array(), $thing = null)
 {
-	return parse(EvalElse($thing, (get_pref('smd_at_work_enabled', null, true) == '1')));
+    return parse(EvalElse($thing, (get_pref('smd_at_work_enabled', null, true) == '1')));
 }
 
 /**
@@ -243,21 +228,19 @@ function smd_if_at_work($atts = array(), $thing = null)
  */
 function smd_at_work_status($atts = array(), $thing = null)
 {
-	extract(lAtts(array(
-		'status' => null,
-	), $atts));
+    extract(lAtts(array(
+        'status' => null,
+    ), $atts));
 
-	// Null status toggles the state.
-	if ($status === null) {
-		$status = !get_pref('smd_at_work_enabled', null, true);
-	}
+    // Null status toggles the state.
+    if ($status === null) {
+        $status = !get_pref('smd_at_work_enabled', null, true);
+    }
 
-	if (is_logged_in()) {
-		set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
-	}
+    if (is_logged_in()) {
+        set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
+    }
 }
-
-
 
 # --- END PLUGIN CODE ---
 if (0) {
@@ -268,7 +251,7 @@ h1. smd_at_work
 
 Tell visitors your Textpattern website is undergoing maintenance with the flick of a switch.
 
-# Install and enable the plugin.
+# Install and enable the plugin [Requires Textpattern 4.6.0+].
 # Visit the __Admin > Prefs__ panel.
 # Set __Maintenance mode enabled__ on or off as desired and set the optional message to display.
 
