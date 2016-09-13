@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.21 - 2016-09-14
+
+* Fix missing tag registration.
+
 ## 0.20 - 2016-09-12
 
 * For Txp 4.6.0+ only.
