@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.20';
+$plugin['version'] = '0.21';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -89,6 +89,12 @@ if (txpinterface === 'admin') {
     }
 } elseif (txpinterface === 'public') {
     register_callback('smd_at_work_init', 'pretext');
+
+    if (class_exists('\Textpattern\Tag\Registry')) {
+        Txp::get('\Textpattern\Tag\Registry')
+            ->register('smd_at_work_status')
+            ->register('smd_if_at_work');
+    }
 }
 
 /**
