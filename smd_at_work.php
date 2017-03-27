@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.21';
+$plugin['version'] = '0.22';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -78,7 +78,7 @@ if (txpinterface === 'admin') {
     add_privs('prefs.smd_at_work', '1');
     add_privs('plugin_prefs.smd_at_work', '1');
     register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
-    register_callback('smd_at_work_banner', 'admin_side', 'pagetop_end');
+    register_callback('smd_at_work_banner', 'admin_side', 'footer');
     register_callback('smd_at_work_install', 'prefs', null, 1);
     register_callback('smd_at_work_options', 'plugin_prefs.smd_at_work', null, 1);
 
@@ -123,7 +123,7 @@ function smd_at_work_welcome($evt, $stp)
  * @param string $evt Textpattern action event
  * @param string $stp Textpattern action step
  */
-function smd_at_work_banner($evt, $stp)
+function smd_at_work_banner($evt, $stp, $data)
 {
     global $event, $step;
 
@@ -132,8 +132,10 @@ function smd_at_work_banner($evt, $stp)
     $link = smd_at_work_prefs_link();
 
     if (get_pref('smd_at_work_enabled', null, $force) == '1') {
-        echo '<div class="information" style="position:fixed; right:20px; bottom:0;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</div>';
+        $data = '<p class="warning" style="display:inline-block;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</p>' .n. $data;
     }
+
+    return $data;
 }
 
 /**
@@ -263,7 +265,7 @@ Tell visitors your Textpattern website is undergoing maintenance with the flick 
 
 With the switch on, anyone not logged into the admin side will see a 503 error status and your given message. If you set up an @error_503@ Page template, that will be delivered instead.
 
-When maintenance mode is on, a message is displayed in the lower-right hand corner of all admin-side panels to remind you of the fact, with a link to the preferences panel so you can easily turn it off.
+When maintenance mode is on, a message is displayed in the lower-left hand corner of all admin-side panels to remind you of the fact, with a link to the preferences panel so you can easily turn it off.
 
 h2. Public tags
 

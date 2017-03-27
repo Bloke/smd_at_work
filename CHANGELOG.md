@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22 - 2017-03-27
+
+* Move admin-side message to a better location (thanks bici/phiw13).
+
 ## 0.21 - 2016-09-14
 
 * Fix missing tag registration.
