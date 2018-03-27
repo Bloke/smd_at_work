@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.22';
+$plugin['version'] = '0.30';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -55,9 +55,11 @@ $plugin['flags'] = '3';
 // abc_string_name => Localized String
 
 $plugin['textpack'] = <<<EOT
-#@smd_at_work
-smd_at_work => Maintenance mode
+#@owner smd_at_work
+#@admin-side
 smd_at_work_admin_message => Website is in <a href="{url}">Maintenance Mode</a>
+#@prefs
+smd_at_work => Maintenance mode
 smd_at_work_enabled => Maintenance mode enabled
 smd_at_work_message => Maintenance message
 EOT;
@@ -73,20 +75,7 @@ if (!defined('txpinterface'))
  * @see http://stefdawson.com/
  */
 if (txpinterface === 'admin') {
-    global $textpack;
-
-    add_privs('prefs.smd_at_work', '1');
-    add_privs('plugin_prefs.smd_at_work', '1');
-    register_callback('smd_at_work_welcome', 'plugin_lifecycle.smd_at_work');
-    register_callback('smd_at_work_banner', 'admin_side', 'footer');
-    register_callback('smd_at_work_install', 'prefs', null, 1);
-    register_callback('smd_at_work_options', 'plugin_prefs.smd_at_work', null, 1);
-
-    // If loaded from cache, we can access the Textpack from the global scope
-    // to auto-install it later.
-    if (isset($plugin)) {
-        $textpack = $plugin['textpack'];
-    }
+    new smd_at_work();
 } elseif (txpinterface === 'public') {
     register_callback('smd_at_work_init', 'pretext');
 
@@ -95,158 +84,178 @@ if (txpinterface === 'admin') {
             ->register('smd_at_work_status')
             ->register('smd_if_at_work');
     }
-}
 
-/**
- * Handler for plugin lifecycle events.
- *
- * @param string $evt Textpattern action event
- * @param string $stp Textpattern action step
- */
-function smd_at_work_welcome($evt, $stp)
-{
-    switch ($stp) {
-        case 'installed':
-        case 'enabled':
-            smd_at_work_install();
-            break;
-        case 'deleted':
-            remove_pref(null, 'smd_at_work');
-            safe_delete('txp_lang', "name LIKE 'smd\_at\_work%'");
-            break;
-    }
-}
-
-/**
- * Display a banner to inform admins that the site is in maintenance mode.
- *
- * @param string $evt Textpattern action event
- * @param string $stp Textpattern action step
- */
-function smd_at_work_banner($evt, $stp, $data)
-{
-    global $event, $step;
-
-    // Force DB lookup of pref to avoid stale message on prefs screen.
-    $force = ($event === 'prefs' && ($step === 'prefs_save')) ? true : false;
-    $link = smd_at_work_prefs_link();
-
-    if (get_pref('smd_at_work_enabled', null, $force) == '1') {
-        $data = '<p class="warning" style="display:inline-block;">' . gTxt('smd_at_work_admin_message', array('{url}' => $link)) . '</p>' .n. $data;
-    }
-
-    return $data;
-}
-
-/**
- * Install the prefs if necessary.
- *
- * This is a separate function so it can be used as a direct callback.
- * When operating under a plugin cache environment, the install lifecycle
- * event is never fired. Neither is the Textpack installation process, so
- * this is a fallback.
- *
- * The lifecycle callback remains for deletion purposes under a regular installation,
- * since the plugin cannot detect this in a cache environment.
- *
- * @see smd_at_work_welcome()
- */
-function smd_at_work_install()
-{
-    global $textpack, $textarray;
-
-    if (get_pref('smd_at_work_enabled', null) === null) {
-        set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_PLUGIN, 'yesnoradio', 10);
-    }
-
-    if (get_pref('smd_at_work_message', null) === null) {
-        set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'text_input', 20);
-    }
-
-    if (!isset($textarray['smd_at_work']) && $textpack !== null) {
-        install_textpack($textpack);
-
-        // Refresh the language strings so they are immediately available.
-        $textarray = load_lang(LANG);
-    }
-}
-
-/**
- * Jump to the prefs panel.
- */
-function smd_at_work_options()
-{
-    $link = smd_at_work_prefs_link();
-
-    header('Location: ' . $link);
-}
-
-/**
- * Fetch the admin-side prefs panel link.
- */
-function smd_at_work_prefs_link()
-{
-    return '?event=prefs#prefs_group_smd_at_work';
-}
-
-/**
- * Public-side initialisation.
- *
- * Only sets up the callback if:
- *  1. The plugin's toggle pref is on.
- *  2. The visitor is not logged into the admin side.
- *  3. the URL param txpcleantest is missing.
- *
- * @see smd_at_work()
- */
-function smd_at_work_init()
-{
-    if (get_pref('smd_at_work_enabled') == '1') {
-        if (txpinterface === 'public' and !gps('txpcleantest') and !is_logged_in()) {
-            $_GET = $_POST = $_REQUEST = array();
-            register_callback('smd_at_work', 'pretext_end');
+    /**
+     * Public-side initialisation.
+     *
+     * Only sets up the callback if:
+     *  1. The plugin's toggle pref is on.
+     *  2. The visitor is not logged into the admin side.
+     *  3. the URL param txpcleantest is missing.
+     *
+     * @see smd_at_work()
+     */
+    function smd_at_work_init()
+    {
+        if (get_pref('smd_at_work_enabled') == '1') {
+            if (txpinterface === 'public' && !gps('txpcleantest') && !is_logged_in()) {
+                $_GET = $_POST = $_REQUEST = array();
+                register_callback('smd_at_work', 'pretext_end');
+            }
         }
     }
-}
 
-/**
- * Throw an HTTP 503 error.
- */
-function smd_at_work()
-{
-    txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
-}
-
-/**
- * Public conditional tag to determine if maintenance mode is active.
- *
- * Not so much use on the actual public site, but handy for admin-side
- * dashboards.
- */
-function smd_if_at_work($atts = array(), $thing = null)
-{
-    return parse(EvalElse($thing, (get_pref('smd_at_work_enabled', null, true) == '1')));
-}
-
-/**
- * Public tag to set the maintenance status.
- *
- * Only logged-in users may set this. It is up to application
- * logic if this is restricted any further.
- */
-function smd_at_work_status($atts = array(), $thing = null)
-{
-    extract(lAtts(array(
-        'status' => null,
-    ), $atts));
-
-    // Null status toggles the state.
-    if ($status === null) {
-        $status = !get_pref('smd_at_work_enabled', null, true);
+    /**
+     * Throw an HTTP 503 error.
+     */
+    function smd_at_work()
+    {
+        txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
     }
 
-    if (is_logged_in()) {
-        set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
+    /**
+     * Public tag to set the maintenance status.
+     *
+     * Only logged-in users may set this. It is up to application
+     * logic if this is restricted any further.
+     */
+    function smd_at_work_status($atts = array(), $thing = null)
+    {
+        extract(lAtts(array(
+            'status' => null,
+        ), $atts));
+
+        // Null status toggles the state.
+        if ($status === null) {
+            $status = !get_pref('smd_at_work_enabled', null, true);
+        }
+
+        if (is_logged_in()) {
+            set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
+        }
+    }
+
+    /**
+     * Public conditional tag to determine if maintenance mode is active.
+     *
+     * Not so much use on the actual public site, but handy for admin-side
+     * dashboards.
+     */
+    function smd_if_at_work($atts = array(), $thing = null)
+    {
+        return parse($thing, get_pref('smd_at_work_enabled', null, true) == '1');
+    }
+}
+
+/**
+ * Admin-side class.
+ */
+class smd_at_work
+{
+    /**
+     * The plugin's event.
+     *
+     * @var string
+     */
+    protected $smd_at_work_event = __CLASS__;
+
+    /**
+     * Constructor.
+     */
+    public function __construct()
+    {
+        add_privs('prefs.'.$this->smd_at_work_event, '1');
+        add_privs('plugin_prefs.'.$this->smd_at_work_event, '1');
+        register_callback(array($this, 'welcome'), 'plugin_lifecycle.'.$this->smd_at_work_event);
+        register_callback(array($this, 'banner'), 'admin_side', 'footer');
+        register_callback(array($this, 'install'), 'prefs', null, 1);
+        register_callback(array($this, 'options'), 'plugin_prefs.'.$this->smd_at_work_event, null, 1);
+    }
+
+    /**
+     * Handler for plugin lifecycle events.
+     *
+     * @param string $evt Textpattern action event
+     * @param string $stp Textpattern action step
+     */
+    public function welcome($evt, $stp)
+    {
+        switch ($stp) {
+            case 'installed':
+            case 'enabled':
+                $this->install();
+                break;
+            case 'deleted':
+                remove_pref(null, 'smd_at_work');
+                safe_delete('txp_lang', "owner = 'smd\_at\_work'");
+                break;
+        }
+    }
+
+    /**
+     * Display a banner to inform admins that the site is in maintenance mode.
+     *
+     * @param string $evt  Textpattern action event
+     * @param string $stp  Textpattern action step
+     * @param string $data The current footer content
+     */
+    public function banner($evt, $stp, $data)
+    {
+        global $event, $step;
+
+        // Force DB lookup of pref to avoid stale message on prefs screen.
+        $force = ($event === 'prefs' && $step === 'prefs_save') ? true : false;
+        $link = $this->prefs_link();
+
+        if (get_pref('smd_at_work_enabled', null, $force) == '1') {
+            // Prepend the maintenance message to the footer content.
+            $data = '<p class="warning" style="display:inline-block;">'.
+                gTxt('smd_at_work_admin_message', array('{url}' => $link)).
+                '</p>'.
+                n.$data;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Fetch the admin-side prefs panel link.
+     */
+    protected function prefs_link()
+    {
+        return '?event=prefs#prefs_group_smd_at_work';
+    }
+
+    /**
+     * Jump to the prefs panel.
+     */
+    public function options()
+    {
+        $link = $this->prefs_link();
+
+        header('Location: ' . $link);
+    }
+
+    /**
+     * Install the prefs if necessary.
+     *
+     * When operating under a plugin cache environment, the install lifecycle
+     * event is never fired, so this is a fallback.
+     *
+     * The lifecycle callback remains for deletion purposes under a regular installation,
+     * since the plugin cannot detect this in a cache environment.
+     *
+     * @see welcome()
+     */
+    function install()
+    {
+        if (get_pref('smd_at_work_enabled', null) === null) {
+            set_pref('smd_at_work_enabled', 0, 'smd_at_work', PREF_PLUGIN, 'yesnoradio', 10);
+        }
+
+        if (get_pref('smd_at_work_message', null) === null) {
+            set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'text_input', 20);
+        }
     }
 }
 
