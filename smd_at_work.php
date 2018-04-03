@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.31';
+$plugin['version'] = '0.40';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
