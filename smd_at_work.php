@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.30';
+$plugin['version'] = '0.31';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -255,7 +255,7 @@ class smd_at_work
         }
 
         if (get_pref('smd_at_work_message', null) === null) {
-            set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'text_input', 20);
+            set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'pref_longtext_input', 20);
         }
     }
 }
@@ -269,7 +269,7 @@ h1. smd_at_work
 
 Tell visitors your Textpattern website is undergoing maintenance with the flick of a switch.
 
-# Install and enable the plugin [Requires Textpattern 4.6.0+].
+# Install and enable the plugin [Requires Textpattern 4.7.0+].
 # Visit the __Admin > Prefs__ panel.
 # Set __Maintenance mode enabled__ on or off as desired and set the optional message to display.
 
