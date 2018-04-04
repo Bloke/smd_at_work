@@ -63,6 +63,13 @@ smd_at_work_admin_message => Website is in <a href="{url}">Maintenance Mode</a>
 smd_at_work => Maintenance mode
 smd_at_work_enabled => Maintenance mode enabled
 smd_at_work_message => Maintenance message
+#@language fr
+#@admin-side
+smd_at_work_admin_message => Le site est en <a href="{url}">mode de maintenance</a>
+#@prefs
+smd_at_work => Mode de maintenance
+smd_at_work_enabled => Activer le mode de maintenance ?
+smd_at_work_message => Message de maintenance
 EOT;
 
 if (!defined('txpinterface'))
