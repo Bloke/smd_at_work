@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.40';
+$plugin['version'] = '0.41';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
 $plugin['author_uri'] = 'http://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
@@ -256,6 +256,8 @@ class smd_at_work
 
         if (get_pref('smd_at_work_message', null) === null) {
             set_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.', 'smd_at_work', PREF_PLUGIN, 'pref_longtext_input', 20);
+        } else {
+            update_pref('smd_at_work_message', null, null, null, 'pref_longtext_input');
         }
     }
 }
