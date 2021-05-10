@@ -1,0 +1,16 @@
+{
+  "name": "bloke/smd_at_work",
+  "description": "Switchable site maintenance mode for Textpattern CMS",
+  "keywords": ["textpattern", "plugin", "site", "maintenance", "work", "update", "restructure"],
+  "homepage": "https://github.com/bloke/smd_at_work",
+  "license": "GPL-2.0",
+  "type": "textpattern-plugin",
+  "support": {
+    "issues": "https://github.com/bloke/smd_at_work/issues",
+    "source": "https://github.com/bloke/smd_at_work"
+  },
+  "require": {
+    "textpattern/lock": ">=4.7.0",
+    "textpattern/installer": "*"
+  }
+}

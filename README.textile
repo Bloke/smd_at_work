@@ -1,0 +1,60 @@
+h1. smd_at_work
+
+Tell visitors your Textpattern website is undergoing maintenance with the flick of a switch.
+
+# Install and enable the plugin [Requires Textpattern 4.7.0+].
+# Visit the __Admin > Prefs__ panel.
+# Set __Maintenance mode enabled__ on or off as desired and set the optional message to display.
+
+With the switch on, anyone not logged into the admin side will see a 503 error status and your given message. If you set up an @error_503@ Page template, that will be delivered instead.
+
+When maintenance mode is on, a message is displayed in the footer of all admin-side panels to remind you of the fact. Admins also have a link to the preferences panel so they can easily turn it off.
+
+h2. Public tags
+
+There are three public tags available. The tags are of limited use in live templates, but can be very helpful on admin-side dashboards to allow shortcuts for setting the maintenance state of the site.
+
+h3. @<txp:smd_if_at_work>@
+
+Conditional tag, with no attributes, that executes the contained content if the site is in maintenance mode. Supports @<txp:else />@.
+
+h3. @<txp:smd_at_work_status>@
+
+Set the site maintenance state. Attribute:
+
+h4. @status@
+
+Values:
+
+* omitted: toggle status
+* 0: set maintenance mode off
+* 1: set maintenance mode on
+
+Note that the plugin only checks to see if the tag is used by any logged-in user. If you wish to exact finer-grained control, you must do so in your Page template.
+
+h3. @<txp:smd_at_work_message>@
+
+Display a site maintenance message. Attribute:
+
+h4. @text@
+
+The text to display. If omitted, the system-wide message (as set in prefs) is used.
+
+h2. Example 1: toggle the site state on click of a link
+
+bc.. <txp:adi_gps name="maintenance" quiet="1" />
+
+<txp:if_variable name="maintenance" value="">
+<txp:else />
+   <txp:smd_at_work_status />
+</txp:if_variable>
+
+<txp:smd_if_at_work>
+   Maintenance Mode is on. <a href="?event=dashboard&maintenance=1">Make site live</a>.
+<txp:else />
+   Website is live. <a href="?event=dashboard&maintenance=1">Put it in Maintenance Mode</a>.
+</txp:smd_if_at_work>
+
+h2. Author/credits
+
+Cobbled together by "Stef Dawson":https://stefdawson.com/sw, this plugin is a complete rip of the excellent rvm_maintenance plugin, but with the ability to control things via a preference instead of using the plugin's enabled/disabled state. This makes it easier to manage your site's status in a disk-based plugin cache environment where plugins are "always on". Thanks to Ruud van Melick for the original plugin.

@@ -1,0 +1,11 @@
+{
+  "name": "smd_at_work",
+  "description": "Switchable site maintenance mode for Textpattern",
+  "version": "0.4.2",
+  "type": 1,
+  "author": "Stef Dawson",
+  "author_uri": "https://stefdawson.com/",
+  "order": 5,
+  "flags": 3,
+  "help": {"file" : ["./README.textile"]}
+}
