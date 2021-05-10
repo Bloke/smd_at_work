@@ -17,9 +17,9 @@ $plugin['name'] = 'smd_at_work';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.41';
+$plugin['version'] = '0.4.2';
 $plugin['author'] = 'Stef Dawson / Dale Chapman';
-$plugin['author_uri'] = 'http://stefdawson.com/';
+$plugin['author_uri'] = 'https://stefdawson.com/';
 $plugin['description'] = 'Switchable site maintenance mode';
 
 // Plugin load order:
@@ -80,18 +80,12 @@ if (!defined('txpinterface'))
  * smd_at_work: a Textpattern CMS plugin for informing visitors of site maintenance.
  *
  * @author Stef Dawson
- * @see http://stefdawson.com/
+ * @see https://stefdawson.com/
  */
 if (txpinterface === 'admin') {
     new smd_at_work();
 } elseif (txpinterface === 'public') {
     register_callback('smd_at_work_init', 'pretext');
-
-    if (class_exists('\Textpattern\Tag\Registry')) {
-        Txp::get('\Textpattern\Tag\Registry')
-            ->register('smd_at_work_status')
-            ->register('smd_if_at_work');
-    }
 
     /**
      * Public-side initialisation.
@@ -120,39 +114,63 @@ if (txpinterface === 'admin') {
     {
         txp_die(get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.'), 503);
     }
+}
 
-    /**
-     * Public tag to set the maintenance status.
-     *
-     * Only logged-in users may set this. It is up to application
-     * logic if this is restricted any further.
-     */
-    function smd_at_work_status($atts = array(), $thing = null)
-    {
-        extract(lAtts(array(
-            'status' => null,
-        ), $atts));
+// Tag registration.
+if (class_exists('\Textpattern\Tag\Registry')) {
+    Txp::get('\Textpattern\Tag\Registry')
+        ->register('smd_at_work_status')
+        ->register('smd_at_work_message')
+        ->register('smd_if_at_work');
+}
 
-        // Null status toggles the state.
-        if ($status === null) {
-            $status = !get_pref('smd_at_work_enabled', null, true);
-        }
+/**
+ * Public tag to set the maintenance status.
+ *
+ * Only logged-in users may set this. It is up to application
+ * logic if this is restricted any further.
+ */
+function smd_at_work_status($atts = array(), $thing = null)
+{
+    extract(lAtts(array(
+        'status' => null,
+    ), $atts));
 
-        if (is_logged_in()) {
-            set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
-        }
+    // Null status toggles the state.
+    if ($status === null) {
+        $status = !get_pref('smd_at_work_enabled', null, true);
     }
 
-    /**
-     * Public conditional tag to determine if maintenance mode is active.
-     *
-     * Not so much use on the actual public site, but handy for admin-side
-     * dashboards.
-     */
-    function smd_if_at_work($atts = array(), $thing = null)
-    {
-        return parse($thing, get_pref('smd_at_work_enabled', null, true) == '1');
+    if (is_logged_in()) {
+        set_pref('smd_at_work_enabled', (($status) ? 1 : 0));
     }
+}
+
+/**
+ * Public conditional tag to determine if maintenance mode is active.
+ *
+ * Not so much use on the actual public site, but handy for admin-side
+ * dashboards.
+ */
+function smd_if_at_work($atts = array(), $thing = null)
+{
+    return parse($thing, get_pref('smd_at_work_enabled', null, true) == '1');
+}
+
+/**
+ * Return the given status message or the currently set maintenance message
+ */
+function smd_at_work_message($atts = array(), $thing = null)
+{
+    extract(lAtts(array(
+        'text' => null,
+    ), $atts));
+
+    if ($text === null) {
+        $text = get_pref('smd_at_work_message', 'Site maintenance in progress. Please check back later.');
+    }
+
+   return $text;
 }
 
 /**
@@ -165,19 +183,27 @@ class smd_at_work
      *
      * @var string
      */
-    protected $smd_at_work_event = __CLASS__;
+    protected $event = __CLASS__;
+
+    /**
+     * The plugin's privileges.
+     *
+     * @var string
+     */
+    protected $privs = '1';
 
     /**
      * Constructor.
      */
     public function __construct()
     {
-        add_privs('prefs.'.$this->smd_at_work_event, '1');
-        add_privs('plugin_prefs.'.$this->smd_at_work_event, '1');
-        register_callback(array($this, 'welcome'), 'plugin_lifecycle.'.$this->smd_at_work_event);
+        add_privs('prefs.'.$this->event, $this->privs);
+        add_privs('plugin_prefs.'.$this->event, $this->privs);
+        add_privs($this->event.'.bannerlink', $this->privs);
+        register_callback(array($this, 'welcome'), 'plugin_lifecycle.'.$this->event);
         register_callback(array($this, 'banner'), 'admin_side', 'footer');
         register_callback(array($this, 'install'), 'prefs', null, 1);
-        register_callback(array($this, 'options'), 'plugin_prefs.'.$this->smd_at_work_event, null, 1);
+        register_callback(array($this, 'options'), 'plugin_prefs.'.$this->event, null, 1);
     }
 
     /**
@@ -217,9 +243,9 @@ class smd_at_work
 
         if (get_pref('smd_at_work_enabled', null, $force) == '1') {
             // Prepend the maintenance message to the footer content.
-            $data = '<p class="warning" style="display:inline-block;">'.
-                gTxt('smd_at_work_admin_message', array('{url}' => $link)).
-                '</p>'.
+            $msg = gTxt('smd_at_work_admin_message', array('{url}' => $link));
+            $msg = has_privs($this->event.'.bannerlink') ? $msg : strip_tags($msg);
+            $data = '<p class="warning" style="display:inline-block;">'.$msg.'</p>'.
                 n.$data;
         }
 
@@ -268,7 +294,6 @@ class smd_at_work
         }
     }
 }
-
 # --- END PLUGIN CODE ---
 if (0) {
 ?>
@@ -284,11 +309,11 @@ Tell visitors your Textpattern website is undergoing maintenance with the flick 
 
 With the switch on, anyone not logged into the admin side will see a 503 error status and your given message. If you set up an @error_503@ Page template, that will be delivered instead.
 
-When maintenance mode is on, a message is displayed in the lower-left hand corner of all admin-side panels to remind you of the fact, with a link to the preferences panel so you can easily turn it off.
+When maintenance mode is on, a message is displayed in the footer of all admin-side panels to remind you of the fact. Admins also have a link to the preferences panel so they can easily turn it off.
 
 h2. Public tags
 
-There are two public tags available. One to determine the current state of maintenance mode, and the other to set it on/off. These are of limited use in live templates, but can be very helpful on admin-side dashboards to allow shortcuts for setting the maintenance state of the site.
+There are three public tags available. The tags are of limited use in live templates, but can be very helpful on admin-side dashboards to allow shortcuts for setting the maintenance state of the site.
 
 h3. @<txp:smd_if_at_work>@
 
@@ -308,6 +333,14 @@ Values:
 
 Note that the plugin only checks to see if the tag is used by any logged-in user. If you wish to exact finer-grained control, you must do so in your Page template.
 
+h3. @<txp:smd_at_work_message>@
+
+Display a site maintenance message. Attribute:
+
+h4. @text@
+
+The text to display. If omitted, the system-wide message (as set in prefs) is used.
+
 h2. Example 1: toggle the site state on click of a link
 
 bc.. <txp:adi_gps name="maintenance" quiet="1" />
@@ -325,7 +358,7 @@ bc.. <txp:adi_gps name="maintenance" quiet="1" />
 
 h2. Author/credits
 
-Cobbled together by "Stef Dawson":http://stefdawson.com/sw, this plugin is a complete rip of the excellent rvm_maintenance plugin, but with the ability to control things via a preference instead of using the plugin's enabled/disabled state. This makes it easier to manage your site's status in a disk-based plugin cache environment where plugins are "always on". Thanks to Ruud van Melick for the original plugin.
+Cobbled together by "Stef Dawson":https://stefdawson.com/sw, this plugin is a complete rip of the excellent rvm_maintenance plugin, but with the ability to control things via a preference instead of using the plugin's enabled/disabled state. This makes it easier to manage your site's status in a disk-based plugin cache environment where plugins are "always on". Thanks to Ruud van Melick for the original plugin.
 # --- END PLUGIN HELP ---
 -->
 <?php
