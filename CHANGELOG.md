@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 - 2021-05-10
+## 0.5.0 - 2021-05-10
 
 * Add `<txp:smd_at_work_message>` tag.
 * Register public tags everywhere.

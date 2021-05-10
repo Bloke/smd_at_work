@@ -1,7 +1,7 @@
 {
   "name": "smd_at_work",
   "description": "Switchable site maintenance mode for Textpattern",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "type": 1,
   "author": "Stef Dawson",
   "author_uri": "https://stefdawson.com/",
