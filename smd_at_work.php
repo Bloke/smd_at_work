@@ -202,8 +202,8 @@ class smd_at_work
         add_privs($this->event.'.bannerlink', $this->privs);
         register_callback(array($this, 'welcome'), 'plugin_lifecycle.'.$this->event);
         register_callback(array($this, 'banner'), 'admin_side', 'footer');
-        register_callback(array($this, 'install'), 'prefs', null, 1);
-        register_callback(array($this, 'options'), 'plugin_prefs.'.$this->event, null, 1);
+        register_callback(array($this, 'install'), 'prefs', '', 1);
+        register_callback(array($this, 'options'), 'plugin_prefs.'.$this->event, '', 1);
     }
 
     /**
